@@ -2,6 +2,7 @@ package com.example.weatherapp.viewmodel
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.weatherapp.SharedPreferences
 import com.example.weatherapp.model.current.WeatherResponse
 import com.example.weatherapp.model.oneapi.oneApiResponse
 import com.example.weatherapp.repository.WeatherRepository
@@ -10,7 +11,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-const val API_KEY = "141d23084477611a21ef17a241c9c50f"
+const val API_KEY = "" // HERE PUT YOUR OPENWEATHERMAP API KEY
 
 class WeatherViewModel : ViewModel() {
     private var mutableLiveData: MutableLiveData<WeatherResponse>? = null
@@ -48,6 +49,8 @@ class WeatherViewModel : ViewModel() {
         return oneApiMutableLiveData
 
     }
+
+
 
 
 

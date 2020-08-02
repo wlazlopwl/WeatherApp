@@ -21,7 +21,6 @@ class WeatherRepository {
         }
     }
 
-    var weatherDataEndpoints: WeatherDataEndpoints = WeatherDataService.buildService(WeatherDataEndpoints::class.java)
 
     constructor()
 
@@ -40,8 +39,9 @@ class WeatherRepository {
                     if (response.isSuccessful) {
 
 
-                        Log.d("test", "test")
-                        weatherData.value = response.body()
+                            weatherData.value = response.body()
+
+
 
                     }
                 }

@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">WeatherApp</string>
+    <string name="current_details">Current details</string>
+    <string name="current_pressure">Pressure</string>
+    <string name="current_humidity">Humidity</string>
+    <string name="current_visibility">Visibility</string>
+    <string name="current_dev_point">Dev point</string>
+    <string name="current_UV_index">UV index</string>
 </resources>

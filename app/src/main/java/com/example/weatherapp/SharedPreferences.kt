@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 
 class SharedPreferences (private val context: Context) {
     private val PREFS_NAME="weather"
-    private var LOCATION = "sieniawa"
+    private var LOCATION = "location"
     private var UNITS="units"
     private var LANG="language"
 
@@ -13,7 +13,7 @@ class SharedPreferences (private val context: Context) {
     private val editor = sharedPreferences.edit()
 
     fun locationExist(): Boolean {
-        return LOCATION.isNullOrBlank()
+        return LOCATION.isNotEmpty()
         }
 
 

@@ -7,12 +7,11 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 
-//http://api.openweathermap.org/data/2.5/find?q=tryncza&units=metric&appid=141d23084477611a21ef17a241c9c50f
-//https://api.openweathermap.org/data/2.5/onecall?lat=50.13&lon=22.58&units=metric&lang=pl&appid=141d23084477611a21ef17a241c9c50f
+
 
 
 interface WeatherDataEndpoints {
-    @GET("data/2.5/find?")
+    @GET("data/2.5/weather?")
     fun getCurrentDataWeather(
         @Query("q") location: String,
         @Query("units") units:String,

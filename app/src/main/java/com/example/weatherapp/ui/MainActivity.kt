@@ -2,17 +2,14 @@ package com.example.weatherapp.ui
 
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
 import android.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.weatherapp.HourForecastAdapter
-import com.example.weatherapp.R
-import com.example.weatherapp.SharedPreferences
-import com.example.weatherapp.model.oneapi.Hourly
-import com.example.weatherapp.model.oneapi.oneApiResponse
+import com.example.weatherapp.*
 import com.example.weatherapp.viewmodel.WeatherViewModel
 import com.squareup.picasso.Callback
 import com.squareup.picasso.Picasso
@@ -27,8 +24,11 @@ class MainActivity : AppCompatActivity() {
     lateinit var weatherViewModel: WeatherViewModel
     lateinit var sharedPreferences: SharedPreferences
     lateinit var hourForecastRV: RecyclerView
+    lateinit var dailyForecastRV: RecyclerView
     private lateinit var hourForecastAdapter: HourForecastAdapter
-    lateinit var hourForecastLayoutManager:RecyclerView.LayoutManager
+    private lateinit var dailyForecastAdapter: DailyForecastAdapter
+    lateinit var hourForecastLayoutManager: RecyclerView.LayoutManager
+    lateinit var dailyForecastLayoutManager: RecyclerView.LayoutManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,19 +44,32 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        hourForecastLayoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL,false)
+        hourForecastLayoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        dailyForecastLayoutManager = LinearLayoutManager(this)
         hourForecastAdapter = HourForecastAdapter()
+        dailyForecastAdapter= DailyForecastAdapter()
         hourForecastRV = findViewById<RecyclerView>(R.id.hour_forecast_rv).apply {
             setHasFixedSize(true)
             layoutManager = hourForecastLayoutManager
-            adapter = hourForecastAdapter
+            adapter = hourForecastAdapter }
 
+        dailyForecastRV=findViewById<RecyclerView>(R.id.daily_forecast_rv).apply {
+            setHasFixedSize(true)
+            isNestedScrollingEnabled=false
+            layoutManager=dailyForecastLayoutManager
+            adapter=dailyForecastAdapter
         }
 
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+        );
 
         if (sharedPreferences.locationExist()) {
             getWeatherForCity(sharedPreferences.getLatestLocation())
-            actualWeatherSearchView.queryHint = sharedPreferences.getLatestLocation()
+            val latestLocation = sharedPreferences.getLatestLocation()
+            actualWeatherSearchView.queryHint = latestLocation
+            getWeatherForCity(latestLocation)
         } else {
             actualWeatherSearchView.queryHint = "Enter city"
         }
@@ -80,11 +93,6 @@ class MainActivity : AppCompatActivity() {
         })
 
 
-
-
-
-
-
     }
 
 
@@ -94,19 +102,20 @@ class MainActivity : AppCompatActivity() {
         weatherViewModel.init(query, sharedPreferences.getUnit(), sharedPreferences.currentLang())
         weatherViewModel.getWeatherRepository()
             ?.observe(this, Observer {
-                test.text = it.list[0].main.temp.roundToInt().toString() + getActualUnit()
-                actualWeatherDesc.text = it.list[0].weather[0].description
-//                weather_time.text=java.time.format.DateTimeFormatter.ISO_INSTANT
-//                    .format(java.time.Instant.ofEpochSecond(it.list[0].dt.toLong())).toString()
-                weather_time.text = convertUnixTime(it.list[0].dt, 7200)
-                val imgType: String = it.list[0].weather[0].icon
+
+                actualTemp.text = it.main.temp.roundToInt().toString() + setActualUnit()
+                actualWeatherDesc.text = it.weather[0].description
+                actualFeelsLike.text = "Feels like " + it.main.feels_like.roundToInt() + setActualUnit()
+                weather_time.text =convertUnixTime(it.dt, it.timezone)
+
+                val imgType: String = it.weather[0].icon
                 Picasso.with(applicationContext).load("http://openweathermap.org/img/wn/" + imgType + "@2x.png")
                     .into(actualWeatherImageView, object : Callback {
                         override fun onSuccess() {
-                            Log.d("t", "test")
-                            val lat = it.list[0].coord.lat.toString()
-                            val lon = it.list[0].coord.lon.toString()
-                            getOneCallWeather(lat,lon)
+
+                            val lat = it.coord.lat.toString()
+                            val lon = it.coord.lon.toString()
+                            getOneCallWeather(lat, lon)
                         }
 
                         override fun onError() {
@@ -115,35 +124,43 @@ class MainActivity : AppCompatActivity() {
                         }
 
                     })
+            }
 
-            })
+
+            )
 
     }
 
-    fun getOneCallWeather(lat:String,lon:String) {
-        weatherViewModel.initOneCall(lat,lon,sharedPreferences.getUnit(),sharedPreferences.currentLang())
+    fun getOneCallWeather(lat: String, lon: String) {
+        weatherViewModel.initOneCall(lat, lon, sharedPreferences.getUnit(), sharedPreferences.currentLang())
         weatherViewModel.getOneCallRepository()?.observe(this, Observer {
+            current_humidity.text=it.current.humidity.toString()+ "%"
+            current_pressure.text=it.current.pressure.toString()+ " hPa"
+            current_visibility.text=it.current.visibility.toString() +" m"
+            current_dev_point.text=it.current.dew_point.toString() + setActualUnit()
+            current_UV_index.text=it.current.uvi.toString()
             hourForecastAdapter.setHourForecast(it.hourly)
             hourForecastAdapter.notifyDataSetChanged()
+            dailyForecastAdapter.setDailyForecast(it.daily)
+            dailyForecastAdapter.notifyDataSetChanged()
+
+
 
         })
 
     }
 
-    private fun getActualUnit(): String {
+     private fun setActualUnit(): String {
         return when (sharedPreferences.getUnit()) {
             "metric" -> 0x00B0.toChar() + "C"
             "imperial" -> 0x00B0.toChar() + "F"
-
             else -> "K"
         }
     }
-
     private fun checkDeviceLang(): String {
         return Locale.getDefault().language
 
     }
-
     //compare lang in SharedPreferences with actual Lang
     private fun compareLang(): Boolean {
         val deviceLang = checkDeviceLang()
@@ -160,14 +177,18 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
-
-
-    fun convertUnixTime(unixDate: Int, timeZone: Int): String {
-        val date = Date((unixDate) * 1000L)
+    private fun convertUnixTime(unixDate: Int, timeZone: Int): String {
+        val date = Date((unixDate + (timeZone)) * 1000L)
         val format: DateFormat = SimpleDateFormat("dd-MM, HH:mm")
-        format.timeZone = TimeZone.getTimeZone("Etc/UTC")
         return format.format(date)
     }
+
+
+
+
+
+
+
 
 }
 
